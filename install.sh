@@ -12,6 +12,12 @@ BACKUP_LOG="/var/log/aiclient2api_backup.log"
 CONTAINER_NAME="aiclient2api"
 IMAGE_NAME="justlikemaki/aiclient-2-api:latest"
 
+GEMINI_PORT="38085"
+ANTIGRAVITY_PORT="38086"
+CODEX_PORT="31455"
+KIRO_PORT_START="39876"
+KIRO_PORT_END="39880"
+
 info() { echo -e "\033[32m[INFO]\033[0m $1"; }
 warn() { echo -e "\033[33m[WARN]\033[0m $1" >&2; }
 err()  { echo -e "\033[31m[ERROR]\033[0m $1" >&2; }
@@ -60,12 +66,12 @@ show_access() {
     echo -e "默认登录密码: \033[31madmin123\033[0m"
     echo -e "配置目录: \033[33m${workdir}/configs\033[0m"
     echo "--------------------------------------------------"
-    echo "常用端口:"
-    echo "  Web/API: ${host_port}"
-    echo "  Gemini OAuth: 8085"
-    echo "  Antigravity OAuth: 8086"
-    echo "  Codex OAuth: 1455"
-    echo "  Kiro OAuth: 19876-19880"
+    echo "端口映射:"
+    echo "  Web/API: ${host_port} -> 3000"
+    echo "  Gemini OAuth: ${GEMINI_PORT} -> 8085"
+    echo "  Antigravity OAuth: ${ANTIGRAVITY_PORT} -> 8086"
+    echo "  Codex OAuth: ${CODEX_PORT} -> 1455"
+    echo "  Kiro OAuth: ${KIRO_PORT_START}-${KIRO_PORT_END} -> 19876-19880"
     echo "=================================================="
     echo ""
 }
@@ -97,10 +103,10 @@ services:
     restart: always
     ports:
       - "\${PORT}:3000"
-      - "8085:8085"
-      - "8086:8086"
-      - "1455:1455"
-      - "19876-19880:19876-19880"
+      - "${GEMINI_PORT}:8085"
+      - "${ANTIGRAVITY_PORT}:8086"
+      - "${CODEX_PORT}:1455"
+      - "${KIRO_PORT_START}-${KIRO_PORT_END}:19876-19880"
     volumes:
       - ./configs:/app/configs
     environment:
@@ -400,6 +406,9 @@ EOF
 clean_all_aiclient2api() {
     info "强制清理 AIClient2API 容器..."
     docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
+
+    info "强制清理 AIClient2API 网络..."
+    docker network rm aiclient2api_default 2>/dev/null || true
 }
 
 uninstall_service() {
